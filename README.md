@@ -11,13 +11,13 @@ This is just a simple TOTP Code generator for Windows Desktop, as I did not want
 
 TODO
 
-![alt text](https://github.com/abesnier/MyOTP/blob/master/myotp.png?raw=true)
+![alt text](https://github.com/abesnier/MyOTP/blob/master/MyOTP/myotp.png?raw=true)
 
 # Record new App
 
 TODO
 
-![alt text](https://github.com/abesnier/MyOTP/blob/master/myotp2.png?raw=true)
+![alt text](https://github.com/abesnier/MyOTP/blob/master/MyOTP/myotp2.png?raw=true)
 
 # Delete an App
 
