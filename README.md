@@ -2,10 +2,10 @@
 
 This is just a simple TOTP Code generator for Windows Desktop, as I did not want to grab and unlock my phone every time I needed a code.
 
- [!WARNING]  
- This application is made for personal use on a secure personal computer.
- 
- Database is encrypted, but the default key is in the repo (it's just a random string, don't forget to change it for YOUR use!)
+> [!WARNING]  
+> This application is made for personal use on a secure personal computer.
+> 
+> Database is encrypted, but the default key is in the repo (it's just a random string, don't forget to change it for YOUR use!)
 
 # Base Use
 
