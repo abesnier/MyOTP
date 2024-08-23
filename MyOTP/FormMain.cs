@@ -4,9 +4,6 @@ namespace MyOTP
 {
     public partial class FormMain : Form
     {
-        //antoine L6SSYXWGNS7JMKDI6J57PRRFDTSBHN2Y
-        //abesnier QFONEJMYFLZZDJ5LC4Z5WAVKT7ZVMSFU
-
         const string dbFile = "mytotp.sqlite";
         List<TotpObject> totpObjects = new();
 
