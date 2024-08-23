@@ -17,9 +17,15 @@ If it is blue, you can click it, it will open your default browser to the record
 
 If it is grey, you can click the code, and it will be copied to the clipboard, ready for use.
 
+Closing the app will reduce it to the notification area. Codes will be destroyed as to not stay in memory, and will be recreated when the app is re-opened.
+
+To close the application, right click the icon in the notification area, and click "Quit".
+
 # Record new App
 
 Clisk the "Add", you will be prompted with this window, which I believe is self-explanatory.
+
+The information is available when you activate or reset the TOTP registration for a website or an application.
 
 ![alt text](https://github.com/abesnier/MyOTP/blob/master/MyOTP/myotp2.png?raw=true)
 
