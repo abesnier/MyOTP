@@ -34,7 +34,7 @@
             contextMenuStrip1 = new ContextMenuStrip(components);
             quitToolStripMenuItem = new ToolStripMenuItem();
             panel1 = new Panel();
-            button1 = new Button();
+            buttonAdd = new Button();
             panelTotpComp = new Panel();
             lblNoApp = new Label();
             contextMenuStrip1.SuspendLayout();
@@ -65,24 +65,24 @@
             // 
             // panel1
             // 
-            panel1.Controls.Add(button1);
+            panel1.Controls.Add(buttonAdd);
             panel1.Dock = DockStyle.Top;
             panel1.Location = new Point(0, 0);
             panel1.Name = "panel1";
             panel1.Size = new Size(333, 27);
             panel1.TabIndex = 0;
             // 
-            // button1
+            // buttonAdd
             // 
-            button1.BackColor = SystemColors.Control;
-            button1.Dock = DockStyle.Right;
-            button1.Location = new Point(287, 0);
-            button1.Name = "button1";
-            button1.Size = new Size(46, 27);
-            button1.TabIndex = 99;
-            button1.Text = "Add";
-            button1.UseVisualStyleBackColor = false;
-            button1.Click += Button1_Click;
+            buttonAdd.BackColor = SystemColors.Control;
+            buttonAdd.Dock = DockStyle.Right;
+            buttonAdd.Location = new Point(287, 0);
+            buttonAdd.Name = "buttonAdd";
+            buttonAdd.Size = new Size(46, 27);
+            buttonAdd.TabIndex = 99;
+            buttonAdd.Text = "Add";
+            buttonAdd.UseVisualStyleBackColor = false;
+            buttonAdd.Click += QuitToolStripMenuItem_Click;
             // 
             // panelTotpComp
             // 
@@ -97,7 +97,7 @@
             // lblNoApp
             // 
             lblNoApp.Anchor = AnchorStyles.Top;
-            lblNoApp.Font = new Font("Segoe UI", 16F, FontStyle.Bold, GraphicsUnit.Point);
+            lblNoApp.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
             lblNoApp.Location = new Point(12, 6);
             lblNoApp.Name = "lblNoApp";
             lblNoApp.Size = new Size(309, 61);
@@ -117,7 +117,8 @@
             Name = "FormMain";
             StartPosition = FormStartPosition.Manual;
             Text = "MyOTP";
-            FormClosing += Form1_FormClosing;
+            Deactivate += FormMain_Deactivate;
+            FormClosing += FormMain_FormClosing;
             contextMenuStrip1.ResumeLayout(false);
             panel1.ResumeLayout(false);
             panelTotpComp.ResumeLayout(false);
@@ -127,7 +128,7 @@
         #endregion
         private NotifyIcon notifyIcon1;
         private Panel panel1;
-        private Button button1;
+        private Button buttonAdd;
         private ContextMenuStrip contextMenuStrip1;
         private ToolStripMenuItem quitToolStripMenuItem;
         private Panel panelTotpComp;

@@ -5,7 +5,7 @@ This is just a quick and (very) dirty TOTP Code generator for Windows Desktop, a
 > [!WARNING]  
 > This application is made for personal use on a secure personal computer.
 > 
-> Database is encrypted, but the default key is in the repo (it's just a random string, don't forget to change it for YOUR use!)
+> Database is encrypted, but the default key is in the repo (it's just a random string, don't forget to [change it for YOUR use](https://github.com/abesnier/MyOTP/blob/master/MyOTP/Properties/Resources.resx)!)
 
 # Base Use
 
