@@ -23,7 +23,7 @@ namespace MyOTP
             var appObject = new TotpObject()
             {
                 AppName = tbAppName.Text,
-                Key = tbSecretKey.Text,
+                Key = System.Text.RegularExpressions.Regex.Replace(tbSecretKey.Text,@"\s+",""),
                 HashMode = cbHash.Text,
                 UserName = tbUserName.Text,
                 Url = tbUrl.Text

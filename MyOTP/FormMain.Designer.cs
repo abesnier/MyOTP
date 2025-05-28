@@ -82,7 +82,7 @@
             buttonAdd.TabIndex = 99;
             buttonAdd.Text = "Add";
             buttonAdd.UseVisualStyleBackColor = false;
-            buttonAdd.Click += QuitToolStripMenuItem_Click;
+            buttonAdd.Click += ButtonAdd_Click;
             // 
             // panelTotpComp
             // 

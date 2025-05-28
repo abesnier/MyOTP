@@ -143,6 +143,18 @@ namespace MyOTP
 
                     while (rdr.Read())
                     {
+                        //var obj = new TotpObject();
+                        //obj.Id = (rdr[colId].GetType() != typeof(DBNull)) ? rdr.GetInt16(colId) : 9999;
+                        //obj.AppName = (rdr[colApp].GetType() != typeof(DBNull)) ? rdr.GetString(colApp) : string.Empty;
+                        //obj.Key = (rdr[colKey].GetType() != typeof(DBNull)) ? rdr.GetString(colKey) : string.Empty;
+                        //obj.Step = (rdr[colStep].GetType() != typeof(DBNull)) ? rdr.GetInt16(colStep) : 9999;
+                        //obj.HashMode = (rdr[colHashmode].GetType() != typeof(DBNull)) ? rdr.GetString(colHashmode) : string.Empty;
+                        //obj.Size = (rdr[colSize].GetType() != typeof(DBNull)) ? rdr.GetInt16(colSize) : 9999;
+                        //obj.UserName = (rdr[colUserName].GetType() != typeof(DBNull)) ? rdr.GetString(colUserName) : string.Empty;
+                        //obj.Url = (rdr[colUrl].GetType() != typeof(DBNull)) ? rdr.GetString(colUrl) : string.Empty;
+
+                        //result.Add(obj);
+
                         result.Add(new TotpObject(
                             (rdr[colId].GetType() != typeof(DBNull)) ? rdr.GetInt16(colId) : 9999,
                             (rdr[colApp].GetType() != typeof(DBNull)) ? rdr.GetString(colApp) : string.Empty,
@@ -157,7 +169,7 @@ namespace MyOTP
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Database error : " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Database error : " + ex.ToString() + "-" + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
             return result;
@@ -244,9 +256,11 @@ namespace MyOTP
         /// <param name="e"></param>
         private void ButtonAdd_Click(object sender, EventArgs e)
         {
+            this.Deactivate -= FormMain_Deactivate;
             FormAddNew formAddNew = new(dbFile);
             formAddNew.ShowDialog();
             LoadComponents();
+            this.Deactivate += FormMain_Deactivate;
         }
 
         /// <summary>
