@@ -31,7 +31,7 @@ The information is available when you activate or reset the TOTP registration fo
 
 # Delete an App
 
-Justr right click on the app name, and there will be a "Delete" option.
+Just right click on the app name, and there will be a "Delete" option.
 
 Deleted entries cannot be recovered.
 
