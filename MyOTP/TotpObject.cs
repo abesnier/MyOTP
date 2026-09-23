@@ -5,35 +5,15 @@ namespace MyOTP
 {
     public class TotpObject : IDisposable
     {
+        private readonly CancellationTokenSource _cts = new();
         private readonly OtpHashMode _hashmode;
         private readonly Totp _totp = null!;
-        private readonly CancellationTokenSource _cts = new();
         private bool _disposed;
 
         //public AppObject App { get; }
 
-        public int Id { get; set; }
-
-        [DisplayName("Application")]
-        public string AppName { get; set; } = null!;
-        public string Key { get; set; } = null!;
-        public string HashMode { get; set; } = null!;
-        public int Size { get; set; }
-        public string? Url { get; set; } = null!;
-
-        [DisplayName("User Name")]
-        public string? UserName { get; set; } = null!;
-
-        [DisplayName("Code")]
-        public string Token { get { return _totp.ComputeTotp(DateTime.UtcNow); } }
-
-        public int Remaining { get { return _totp.RemainingSeconds(); } }
-
-        public int Step { get; set; }
-
-        public TotpObject() { }
-
-
+        public TotpObject()
+        { }
 
         public TotpObject(int id, string appName, string key, int step, string hashMode, int size, string? userName, string? url)
         {
@@ -57,6 +37,27 @@ namespace MyOTP
             _totp = new Totp(secretKey, mode: _hashmode, step: Step, totpSize: Size);
         }
 
+        [DisplayName("Application")]
+        public string AppName { get; set; } = null!;
+
+        public string HashMode { get; set; } = null!;
+        public int Id { get; set; }
+        public string Key { get; set; } = null!;
+
+        public int Remaining
+        { get { return _totp.RemainingSeconds(); } }
+
+        public int Size { get; set; }
+        public int Step { get; set; }
+
+        [DisplayName("Code")]
+        public string Token
+        { get { return _totp.ComputeTotp(DateTime.UtcNow); } }
+
+        public string? Url { get; set; } = null!;
+
+        [DisplayName("User Name")]
+        public string? UserName { get; set; } = null!;
 
         public void Dispose()
         {

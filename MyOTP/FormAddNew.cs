@@ -13,12 +13,12 @@ namespace MyOTP
             tbSecretKey.Select();
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void Button2_Click(object sender, EventArgs e)
         {
             this.Close();
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void Button1_Click(object sender, EventArgs e)
         {
             var appObject = new TotpObject()
             {
@@ -41,7 +41,7 @@ namespace MyOTP
             }
             try
             {
-                int.TryParse(tbSize.Text, out i);
+                _ = int.TryParse(tbSize.Text, out i);
                 appObject.Size = i;
             }
             catch
@@ -60,24 +60,22 @@ namespace MyOTP
             {
                 connection.Open();
                 var commandText = @"INSERT INTO apps (app, key, step, hashmode, size, username, url) VALUES (@app, @key, @step, @hashmode, @size, @username, @url);";
-                using (var command = connection.CreateCommand())
+                using var command = connection.CreateCommand();
+                command.CommandText = commandText;
+                command.Parameters.Add(new SqliteParameter("@app", appObject.AppName));
+                command.Parameters.Add(new SqliteParameter("@key", appObject.Key));
+                command.Parameters.Add(new SqliteParameter("@step", appObject.Step));
+                command.Parameters.Add(new SqliteParameter("@hashmode", appObject.HashMode));
+                command.Parameters.Add(new SqliteParameter("@size", appObject.Size));
+                command.Parameters.Add(new SqliteParameter("@username", appObject.UserName));
+                command.Parameters.Add(new SqliteParameter("@url", appObject.Url));
+                try
                 {
-                    command.CommandText = commandText;
-                    command.Parameters.Add(new SqliteParameter("@app", appObject.AppName));
-                    command.Parameters.Add(new SqliteParameter("@key", appObject.Key));
-                    command.Parameters.Add(new SqliteParameter("@step", appObject.Step));
-                    command.Parameters.Add(new SqliteParameter("@hashmode", appObject.HashMode));
-                    command.Parameters.Add(new SqliteParameter("@size", appObject.Size));
-                    command.Parameters.Add(new SqliteParameter("@username", appObject.UserName));
-                    command.Parameters.Add(new SqliteParameter("@url", appObject.Url));
-                    try
-                    {
-                        command.ExecuteNonQuery();
-                    }
-                    catch
-                    {
-                        MessageBox.Show("Database Error");
-                    }
+                    command.ExecuteNonQuery();
+                }
+                catch
+                {
+                    MessageBox.Show("Database Error");
                 }
             }
 

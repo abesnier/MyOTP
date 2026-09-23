@@ -10,6 +10,7 @@ namespace MyOTP
         private readonly TotpObject _totp;
         private readonly string _dbFile;
         private readonly FormMain _parent;
+        private float _pieProgress;
 
         public TotpComponent(TotpObject totpObject, string dbFile, FormMain parent)
         {
@@ -21,18 +22,15 @@ namespace MyOTP
 
             InitializeComponent();
 
-            typeof(Panel).InvokeMember(
-                "DoubleBuffered",
-                BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
-                null,
-                panel1,
-                new object[] { true });
+            SetDoubleBuffered(panel1);
+            SetDoubleBuffered(panel2);
+
+            panel1.Paint += Panel1_Paint;
+            panel2.Paint += Panel2_Paint;
 
             lbAppName.Text = _totp.AppName;
             lbUserName.Text = _totp.UserName;
             lbTotpCode.Text = _totp.Token;
-
-            DrawLines();
 
             if (!String.IsNullOrEmpty(_totp.Url))
             {
@@ -47,7 +45,18 @@ namespace MyOTP
                     catch { }
                 };
             }
+            _pieProgress = (float)_totp.Remaining / (float)_totp.Step;
             timer1.Start();
+        }
+
+        private static void SetDoubleBuffered(Panel panel)
+        {
+            typeof(Panel).InvokeMember(
+                "DoubleBuffered",
+                BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
+                null,
+                panel,
+                new object[] { true });
         }
 
         private void RefreshTotp()
@@ -55,8 +64,9 @@ namespace MyOTP
             lbTotpCode.Text = _totp.Token;
             lbRemaining.Text = $"({_totp.Remaining})";
             lbRemaining.Left = lbTotpCode.Width + 10;
-            DrawLines();
-            DrawPie(panel1, (float)_totp.Remaining / (float)_totp.Step);
+            _pieProgress = (float)_totp.Remaining / (float)_totp.Step;
+            panel1.Invalidate();
+            panel2.Invalidate();
         }
 
         private void LbTotpCode_Click(object sender, EventArgs e)
@@ -92,34 +102,34 @@ namespace MyOTP
             }
         }
 
-        private static void DrawLine(Control area, Brush? brush, float? width)
+        private static void DrawLine(Graphics g, Control area, Brush? brush, float? width)
         {
-            using Graphics g = area.CreateGraphics();
-            Pen pen = brush != null ? new Pen(brush) : new Pen(Brushes.Black);
+            using Pen pen = brush != null ? new Pen(brush) : new Pen(Brushes.Black);
             pen.Width = width == null ? 1.0f : width.Value;
             int x1 = 0, y1 = area.Height - 1, x2 = area.Width, y2 = area.Height - 1;
             g.DrawLine(pen, x1, y1, x2, y2);
-            pen.Dispose();
         }
 
-        private void DrawLines()
+        private void Panel1_Paint(object? sender, PaintEventArgs e)
         {
-            DrawLine(panel1, Brushes.SteelBlue, 1.0f);
-            DrawLine(panel2, Brushes.SteelBlue, 1.0f);
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+            DrawLine(e.Graphics, panel1, Brushes.SteelBlue, 1.0f);
+            DrawPie(e.Graphics, panel1, _pieProgress);
+        }
+
+        private void Panel2_Paint(object? sender, PaintEventArgs e)
+        {
+            DrawLine(e.Graphics, panel2, Brushes.SteelBlue, 1.0f);
         }
 
         private void Timer1_Tick(object sender, EventArgs e)
         {
             RefreshTotp();
-            Invalidate();
         }
 
-        private void DrawPie(Panel parent, float progress, float angleShift = -90f)
+        private void DrawPie(Graphics g, Panel parent, float progress, float angleShift = -90f)
         {
-            parent.SuspendLayout();
-
-            // Create pen.
-            SolidBrush brush = new SolidBrush(Color.SteelBlue);
+            using SolidBrush brush = new SolidBrush(Color.SteelBlue);
 
             Rectangle rect = parent.DisplayRectangle;
 
@@ -134,12 +144,7 @@ namespace MyOTP
 
             Debug.WriteLine(sweepAngle + " " + rect.X + " " + rect.Y + " " + rect.Width + " " + rect.Height);
 
-            // Draw pie to screen.
-            parent.Refresh();
-            var graphics = parent.CreateGraphics();
-            graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-            graphics.FillPie(brush, rect, startAngle, sweepAngle);
-            parent.ResumeLayout();
+            g.FillPie(brush, rect, startAngle, sweepAngle);
         }
     }
 }

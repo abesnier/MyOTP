@@ -9,6 +9,7 @@
     <ApplicationIcon>padlock.ico</ApplicationIcon>
     <PlatformTarget>x64</PlatformTarget>
     <UseWPF>False</UseWPF>
+    <Description></Description>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

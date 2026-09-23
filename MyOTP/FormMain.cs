@@ -1,4 +1,5 @@
 using Microsoft.Data.Sqlite;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using Windows.Win32;
 using Windows.Win32.Foundation;
@@ -8,8 +9,9 @@ namespace MyOTP
 {
     public partial class FormMain : Form
     {
-        const string dbFile = "mytotp.sqlite";
-        List<TotpObject> totpObjects = [];
+        private const string dbFile = "mytotp.sqlite";
+        private List<TotpObject> totpObjects = [];
+        private bool _allowClose;
 
         /// <summary>
         /// Main Window. It initializes the components, sets the window attributes to prevent peeking and freezing the representation, and loads the TOTP components from the database.
@@ -26,28 +28,6 @@ namespace MyOTP
                 _ = PInvoke.DwmSetWindowAttribute(new HWND(this.Handle), DWMWINDOWATTRIBUTE.DWMWA_FREEZE_REPRESENTATION, i, (uint)Marshal.SizeOf(t));
                 Console.WriteLine("pouet");
             }
-        }
-
-        /// <summary>
-        /// Resizes the main window to accomodate the quantity of totp components and relocates it to the bottom right corner of the screen.
-        /// </summary>
-        private void ResizeAndRelocateWindow()
-        {
-            try { this.SizeChanged -= FormMain_SizeChanged; } catch { }
-            this.SuspendLayout();
-            this.Height = 0;
-            this.Height = this.RectangleToScreen(this.ClientRectangle).Top - this.Top;
-            this.Height += buttonAdd.Height;
-
-            foreach (var truc in panelTotpComp.Controls.OfType<TotpComponent>())
-            {
-                this.Height += truc.Height;
-                panelTotpComp.Height += truc.Height;
-            }
-            this.Height = Math.Max(140, this.Height);
-
-            var rect = Screen.FromControl(this).WorkingArea;
-            this.Location = new Point(rect.Width - this.Width + 1, rect.Height - this.Height + 1);
         }
 
         /// <summary>
@@ -95,6 +75,12 @@ namespace MyOTP
                     };
                     panelTotpComp.Controls.Add(totpComponent);
                     //totpComponent.SendToBack();
+                    typeof(TotpComponent).InvokeMember(
+              "DoubleBuffered",
+              BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.SetProperty,
+              null,
+              totpComponent,
+              new object[] { true });
                 }
             }
 
@@ -105,6 +91,44 @@ namespace MyOTP
             this.ResumeLayout();
             this.Focus();
             try { this.SizeChanged += new EventHandler(this.FormMain_SizeChanged); } catch { }
+        }
+
+        /// <summary>
+        /// Checks the existence of the database file and creates the table if it does not exist.
+        /// </summary>
+        /// <returns>true if the database exists and is valid, false otherwise</returns>
+        private static bool DatabaseExists()
+        {
+            var connectionString = new SqliteConnectionStringBuilder($"Data Source={dbFile}")
+            {
+                Mode = SqliteOpenMode.ReadWriteCreate,
+                Password = Properties.Resources.SqlitePassword
+            }.ToString();
+
+            using var connection = new SqliteConnection(connectionString);
+            connection.Open();
+            var commandText = @"CREATE TABLE IF NOT EXISTS ""apps"" (
+	                                            ""id""	INTEGER NOT NULL,
+	                                            ""app""	TEXT NOT NULL,
+	                                            ""key""	TEXT NOT NULL,
+	                                            ""step""	TEXT NOT NULL,
+	                                            ""hashmode""	TEXT NOT NULL,
+	                                            ""size""	INTEGER NOT NULL,
+	                                            ""username""	TEXT,
+                                                ""url""	TEXT,
+	                                            PRIMARY KEY(""id"" AUTOINCREMENT));";
+            using var command = connection.CreateCommand();
+            command.CommandText = commandText;
+            try
+            {
+                command.ExecuteNonQuery();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Database error : " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
         }
 
         /// <summary>
@@ -125,7 +149,7 @@ namespace MyOTP
             using (var connection = new SqliteConnection(connectionString))
             {
                 connection.Open();
-                var commandText = @"SELECT * FROM apps;";
+                var commandText = @"SELECT * FROM apps ORDER BY app DESC;";
                 using var command = connection.CreateCommand();
                 command.CommandText = commandText;
                 try
@@ -176,41 +200,76 @@ namespace MyOTP
         }
 
         /// <summary>
-        /// Checks the existence of the database file and creates the table if it does not exist.
+        /// Handles clik on the "Add" button to open the FormAddNew dialog for adding a new TOTP application.
         /// </summary>
-        /// <returns>true if the database exists and is valid, false otherwise</returns>
-        private static bool DatabaseExists()
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void ButtonAdd_Click(object sender, EventArgs e)
         {
-            var connectionString = new SqliteConnectionStringBuilder($"Data Source={dbFile}")
+            this.Deactivate -= FormMain_Deactivate;
+            using FormAddNew formAddNew = new(dbFile);
+            try { formAddNew.ShowDialog(); }
+            catch { }
+            finally
             {
-                Mode = SqliteOpenMode.ReadWriteCreate,
-                Password = Properties.Resources.SqlitePassword
-            }.ToString();
+                LoadComponents();
+                this.Deactivate += FormMain_Deactivate;
+            }
+        }
 
-            using var connection = new SqliteConnection(connectionString);
-            connection.Open();
-            var commandText = @"CREATE TABLE IF NOT EXISTS ""apps"" (
-	                                            ""id""	INTEGER NOT NULL,
-	                                            ""app""	TEXT NOT NULL,
-	                                            ""key""	TEXT NOT NULL,
-	                                            ""step""	TEXT NOT NULL,
-	                                            ""hashmode""	TEXT NOT NULL,
-	                                            ""size""	INTEGER NOT NULL,
-	                                            ""username""	TEXT,
-                                                ""url""	TEXT,
-	                                            PRIMARY KEY(""id"" AUTOINCREMENT));";
-            using var command = connection.CreateCommand();
-            command.CommandText = commandText;
-            try
+        /// <summary>
+        /// intercepts the FormDeactivate event (when the window loses focus), and forwards it to the FormClosing event handler.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void FormMain_Deactivate(object? sender, EventArgs e)
+        {
+            if (this.WindowState == FormWindowState.Normal)
             {
-                command.ExecuteNonQuery();
-                return true;
+                this.WindowState = FormWindowState.Minimized;
             }
-            catch (Exception ex)
+        }
+
+        /// <summary>
+        /// When the application is closed by clikcing the X at the top right corner, it will not close but minimize to the system tray instead.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (_allowClose ||
+                e.CloseReason == CloseReason.WindowsShutDown ||
+                e.CloseReason == CloseReason.TaskManagerClosing ||
+                e.CloseReason == CloseReason.ApplicationExitCall ||
+                e.CloseReason == CloseReason.FormOwnerClosing ||
+                e.CloseReason == CloseReason.MdiFormClosing)
             {
-                MessageBox.Show("Database error : " + ex.Message, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
+                CleanupBeforeExit();
+                return;
             }
+
+            totpObjects.Clear();
+            while (this.Controls.OfType<TotpComponent>().Any())
+            {
+                foreach (var truc in this.Controls.OfType<TotpComponent>())
+                {
+                    this.Controls.Remove(truc);
+                    truc.Dispose();
+                }
+            }
+            e.Cancel = true;
+            this.WindowState = FormWindowState.Minimized;
+            this.Hide();
+        }
+
+        /// <summary>
+        /// Reloads the totp components on resizing
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void FormMain_SizeChanged(object? sender, EventArgs e)
+        {
+            if (this.WindowState == FormWindowState.Normal) LoadComponents();
         }
 
         /// <summary>
@@ -229,74 +288,50 @@ namespace MyOTP
         }
 
         /// <summary>
-        /// When the application is closed by clikcing the X at the top right corner, it will not close but minimize to the system tray instead.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void FormMain_FormClosing(object sender, FormClosingEventArgs e)
-        {
-
-            totpObjects.Clear();
-            while (this.Controls.OfType<TotpComponent>().Any())
-            {
-                foreach (var truc in this.Controls.OfType<TotpComponent>())
-                {
-                    this.Controls.Remove(truc);
-                    truc.Dispose();
-                }
-            }
-            e.Cancel = true;
-            this.WindowState = FormWindowState.Minimized;
-        }
-
-        /// <summary>
-        /// Handles clik on the "Add" button to open the FormAddNew dialog for adding a new TOTP application.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void ButtonAdd_Click(object sender, EventArgs e)
-        {
-            this.Deactivate -= FormMain_Deactivate;
-            FormAddNew formAddNew = new(dbFile);
-            formAddNew.ShowDialog();
-            LoadComponents();
-            this.Deactivate += FormMain_Deactivate;
-        }
-
-        /// <summary>
         /// Handles the user clicking on the "Quit" menu item in the context menu of the notify icon.
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         private void QuitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            notifyIcon1.Icon?.Dispose();
-            notifyIcon1.Dispose();
-            Environment.Exit(0);
+            _allowClose = true;
+            this.Close();
+        }
+
+        private void CleanupBeforeExit()
+        {
+            try
+            {
+                notifyIcon1.Visible = false;
+                notifyIcon1.Icon?.Dispose();
+                notifyIcon1.Dispose();
+            }
+            catch
+            {
+                // Ignore cleanup issues during app shutdown.
+            }
         }
 
         /// <summary>
-        /// Reloads the totp components on resizing
+        /// Resizes the main window to accomodate the quantity of totp components and relocates it to the bottom right corner of the screen.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void FormMain_SizeChanged(object? sender, EventArgs e)
+        private void ResizeAndRelocateWindow()
         {
-            if (this.WindowState == FormWindowState.Normal) LoadComponents();
-        }
+            try { this.SizeChanged -= FormMain_SizeChanged; } catch { }
+            this.SuspendLayout();
+            this.Height = 0;
+            this.Height = this.RectangleToScreen(this.ClientRectangle).Top - this.Top;
+            this.Height += buttonAdd.Height;
 
-        /// <summary>
-        /// intercepts the FormDeactivate event (when the window loses focus), and forwards it to the FormClosing event handler.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void FormMain_Deactivate(object sender, EventArgs e)
-        {
-            var ec = new FormClosingEventArgs(
-                CloseReason.UserClosing,
-                false
-            );
-            FormMain_FormClosing(sender, ec);
+            foreach (var truc in panelTotpComp.Controls.OfType<TotpComponent>())
+            {
+                this.Height += truc.Height;
+                panelTotpComp.Height += truc.Height;
+            }
+            this.Height = Math.Max(140, this.Height);
+
+            var rect = Screen.FromControl(this).WorkingArea;
+            this.Location = new Point(rect.Width - this.Width + 1, rect.Height - this.Height + 1);
         }
     }
 }
